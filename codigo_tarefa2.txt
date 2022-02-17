@@ -1,0 +1,43 @@
+# Configuracoes Iniciais
+install.packages("basedosdados")
+library("basedosdados")
+set_billing_id("cienciadadosverao")
+# Extraindo base de dados do BD
+query <- bdplyr("br_ibge_ipca.mes_brasil")
+df <- bd_collect(query)
+# Criando coluna com data (mes/ano)
+install.packages("lubridate")
+library("lubridate")
+df$date <- paste(df$ano, df$mes, sep="-") %>% ym() %>% as.Date()
+## Criando Grafico 1
+library(ggplot2)
+png("Grafico_1.png")
+ggplot(df, aes(x=date, y=variacao_mensal)) +
+     geom_line(color="darkblue", size=1.5) + 
+     xlab("") +
+     ylab("IPCA ao mes (%)") +
+     scale_x_date(date_labels = "%b %Y") +
+     theme(
+         panel.background = element_rect("white"),
+         panel.grid.major = element_line("black", size = 0.5,"dashed"),
+         axis.line = element_line("black", size = 0.5, "solid")
+     )
+dev.off()
+#Criando Grafico 2
+IPCA_d <- subset(df, ano >= 2010 & mes==12, select = c(variacao_doze_meses, date))
+meta <- c(4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.25, 4, 3.75)
+meta_inf <- c(2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 3, 3, 2.75, 2.5, 2.25)
+meta_sup <- c(6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6.5, 6, 6, 5.75, 5.5, 5.25)
+IPCA_d$meta <-meta
+IPCA_d$meta_inf <-meta_inf
+IPCA_d$meta_sup <-meta_sup
+png("Grafico_2.png)
+ggplot(IPCA_d) +
+     geom_col(aes(x=date, y= variacao_doze_meses), fill="cornsilk3") +
+     geom_line(aes(x=date, y= meta), size=1.5) +
+     geom_line(aes(x=date, y= meta_sup), colour="red", size=1.5) +
+     geom_line(aes(x=date, y= meta_inf), colour="blue", size=1.5) +
+     xlab("Ano") +
+     ylab("IPCA ao ano") +
+     theme(panel.background = element_rect(fill = 'white')) +
+     geom_text(aes(x = date, y = variacao_doze_meses, label = variacao_doze_meses), vjust=-0.75)
